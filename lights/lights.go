@@ -2,6 +2,8 @@ package lights
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 
 	"github.com/matryer/vice"
 	"github.com/nicholasjackson/rcswitch"
@@ -48,18 +50,27 @@ func New(c Config, t vice.Transport, swtch rcswitch.Switch) *Lights {
 }
 
 // Setup sets up the transport
-func (l *Lights) Setup() {
+func (l *Lights) Setup() error {
 	l.messageChan = l.transport.Receive(l.config.SqsURI)
+	if l.messageChan == nil {
+		return fmt.Errorf("Unable to create connection to SQS, have you set the AWS credentials")
+	}
+
+	return nil
 }
 
 // Listen for message and turn on and off the switch
 func (l *Lights) Listen() {
 	for m := range l.messageChan {
+		log.Println("Received Message:", m)
+
 		message := decodeMessage(m)
 		switch message.Command {
 		case CommandTurnOn:
+			log.Println("Sending turn on with code:", l.config.OnCode)
 			l.swtch.Send(l.config.OnCode, l.config.Protocol)
 		case CommandTurnOff:
+			log.Println("Sending turn off with code:", l.config.OffCode)
 			l.swtch.Send(l.config.OffCode, l.config.Protocol)
 		}
 	}

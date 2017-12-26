@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"log"
 
 	"github.com/matryer/vice/queues/sqs"
@@ -23,7 +22,7 @@ var (
 
 func main() {
 	flag.Parse()
-	fmt.Println("Starting lights")
+	log.Println("Starting lights: v0.1")
 
 	_, err := host.Init()
 	if err != nil {
@@ -53,8 +52,11 @@ func main() {
 
 	// Create a new instances of the lights application and setup the transport
 	l := lights.New(c, t, sw)
-	l.Setup()
+	err = l.Setup()
+	if err != nil {
+		log.Panicln(err)
+	}
 
-	fmt.Println("Listening for messages")
+	log.Println("Listening for messages")
 	l.Listen()
 }
